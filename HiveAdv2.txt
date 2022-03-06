@@ -1,0 +1,323 @@
+Complete table details
+=====================================
+
+describe formatted tablename;
+
+show create table orders; -- Already execting table
+
+0: jdbc:hive2://> show create table orders;
+OK
++----------------------------------------------------+--+
+|                   createtab_stmt                   |
++----------------------------------------------------+--+
+| CREATE TABLE `orders`(                             |
+|   `id` bigint,                                     |
+|   `product_id` string,                             |
+|   `customer_id` bigint,                            |
+|   `quantity` int,                                  |
+|   `amount` double)                                 |
+| ROW FORMAT SERDE                                   |
+|   'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'  |
+| STORED AS INPUTFORMAT                              |
+|   'org.apache.hadoop.mapred.TextInputFormat'       |
+| OUTPUTFORMAT                                       |
+|   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' |
+| LOCATION                                           |
+|   'hdfs://quickstart.cloudera:8020/user/hive/warehouse/trendytech.db/orders' |
+| TBLPROPERTIES (                                    |
+|   'COLUMN_STATS_ACCURATE'='false',                 |
+|   'numFiles'='2',                                  |
+|   'numRows'='-1',                                  |
+|   'rawDataSize'='-1',                              |
+|   'totalSize'='135',                               |
+|   'transient_lastDdlTime'='1624517442')            |
++----------------------------------------------------+--+
+
+
+Orc File Format
+===================================================
+
+Create a table with orc file format named “orders_orc”
+
+CREATE TABLE orders2(  
+id bigint,   
+product_id string,   
+customer_id bigint,   
+quantity int,   
+amount double) ;
+
+insert into table orders2 values
+(1111,"sivasankar",5266,5,500),
+(1112,"hellow",8,6,500),
+(1113,"zera",5266,5,500),
+(1114,"adfs",5266,5,700),
+(1115,"kfka",5246,7,600),
+(1116,"hive",5268,9,550),
+(1117,"rowdy",5256,23,856),
+(1118,"sivasankar",5266,5,500),
+(1119,"hellow",8,6,500),
+(11110,"zera",5266,5,500),
+(11111,"adfs",5266,5,700),
+(11112,"kfka",5246,7,600),
+(11113,"hive",5268,9,550),
+(11114,"rowdy",5256,23,856);
+
+-- ORC file format storage
+
+CREATE TABLE orders_orc(  
+id bigint,   
+product_id string,   
+customer_id bigint,   
+quantity int,   
+amount double) stored as orc;
+
+
+
+
+Now insert the data in this table from orders table
+-------------------------------------------------
+
+insert into orders_orc select * from orders2;
+
+
+Now try to see the data in hdfs
+-------------------------------------------------
+
+hadoop fs -ls /user/hive/warehouse/trendy.db/orders_orc/000000_0
+
+hadoop fs -cat /user/hive/warehouse/trendy.db/orders_orc/*
+
+
+To get information about an ORC file, use the orcfiledump command
+-------------------------------------------------------------------------
+
+hive --orcfiledump /user/hive/warehouse/trendy.db/orders_orc/000000_0
+
+
+[cloudera@quickstart ~]$ hive --orcfiledump /user/hive/warehouse/trendy.db/orders_orc/000000_0
+Structure for /user/hive/warehouse/trendy.db/orders_orc/000000_0
+File Version: 0.12 with HIVE_8732
+21/07/15 07:26:05 INFO orc.ReaderImpl: Reading ORC rows from /user/hive/warehouse/trendy.db/orders_orc/000000_0 with {include: null, offset: 0, length: 9223372036854775807}
+Rows: 14
+Compression: ZLIB
+Compression size: 262144
+Type: struct<_col0:bigint,_col1:string,_col2:bigint,_col3:int,_col4:double>
+
+Stripe Statistics:
+  Stripe 1:
+    Column 0: count: 14 hasNull: false
+    Column 1: count: 14 hasNull: false min: 1111 max: 11114 sum: 65595
+    Column 2: count: 14 hasNull: false min: adfs max: zera sum: 74
+    Column 3: count: 14 hasNull: false min: 8 max: 5268 sum: 63152
+    Column 4: count: 14 hasNull: false min: 5 max: 23 sum: 120
+    Column 5: count: 14 hasNull: false min: 500.0 max: 856.0 sum: 8412.0
+
+File Statistics:
+  Column 0: count: 14 hasNull: false
+  Column 1: count: 14 hasNull: false min: 1111 max: 11114 sum: 65595
+  Column 2: count: 14 hasNull: false min: adfs max: zera sum: 74
+  Column 3: count: 14 hasNull: false min: 8 max: 5268 sum: 63152
+  Column 4: count: 14 hasNull: false min: 5 max: 23 sum: 120
+  Column 5: count: 14 hasNull: false min: 500.0 max: 856.0 sum: 8412.0
+
+Stripes:
+  Stripe: offset: 3 data: 150 rows: 14 tail: 78 index: 162
+    Stream: column 0 section ROW_INDEX start: 3 length 11
+    Stream: column 1 section ROW_INDEX start: 14 length 29
+    Stream: column 2 section ROW_INDEX start: 43 length 33
+    Stream: column 3 section ROW_INDEX start: 76 length 27
+    Stream: column 4 section ROW_INDEX start: 103 length 25
+    Stream: column 5 section ROW_INDEX start: 128 length 37
+    Stream: column 1 section DATA start: 165 length 17
+    Stream: column 2 section DATA start: 182 length 12
+    Stream: column 2 section LENGTH start: 194 length 9
+    Stream: column 2 section DICTIONARY_DATA start: 203 length 40
+    Stream: column 3 section DATA start: 243 length 23
+    Stream: column 4 section DATA start: 266 length 15
+    Stream: column 5 section DATA start: 281 length 34
+    Encoding column 0: DIRECT
+    Encoding column 1: DIRECT_V2
+    Encoding column 2: DICTIONARY_V2[7]
+    Encoding column 3: DIRECT_V2
+    Encoding column 4: DIRECT_V2
+    Encoding column 5: DIRECT
+
+File length: 693 bytes
+Padding length: 0 bytes
+Padding ratio: 0%
+
+
+Parquet File Format
+=============================================================
+
+Create a table with parquet file format named “orders_parquet”
+
+CREATE TABLE orders_parquet(
+id bigint,   
+product_id string,   
+customer_id bigint,   
+quantity int,   
+amount double) stored as parquet;
+
+insert into orders_parquet select * from orders2;
+
+
+Now try to see the data in hdfs
+-------------------------------------------------------------------------
+
+hadoop fs -cat /user/hive/warehouse/trendy.db/orders_parquet/*
+
+Now get the data from hdfs to local using get command.
+--------------------------------------------------------------------
+
+hadoop fs -get /user/hive/warehouse/trendy.db/orders_parquet/000000_0
+
+Now try to see the metadata using below command.
+
+parquet-tools meta 000000_0
+
+
+Now try to see the data 
+-------------------------------------------------
+
+using below command.parquet-tools cat 000000_0
+
+
+
+
+Vectorization
+==============================================================
+==============================================================
+
+Set property
+------------------------------
+
+set hive.vectorized.execution.enabled = true;
+
+Vectorized execution is off by default.
+
+
+Let us create a table and insert the record.
+
+create table vectorizedtable(
+state string,
+id int) 
+stored as orc;
+
+insert into vectorizedtable values('karnataka',1);
+
+explain select count(*) from vectorizedtable;
+
+
+Change execution engine
+=====================================================================
+=====================================================================
+
+set hive.execution.engine=spark;
+
+Run this query it wont invoke MR job
+---------------------------------------------------
+
+select productid, sum(price) from orders group by productid;
+
+
+MSCK Repair
+=================================================================
+
+hadoop fs -mkdir /data
+
+create external table orders_w_partition(
+id string,  
+customer_id string,  
+product_id string,  
+quantity int,  
+amount double, 
+zipcode char(5))
+partitioned by (state char(2))
+row format delimited fields terminated by ','
+location '/data';
+
+
+show partitions orders_w_partition;
+
+hadoop fs -mkdir /data/state=ca
+hadoop fs -mkdir /data/state=ct
+
+Repair Command
+---------------------------------------
+
+msck repair table orders_w_partition;
+
+show partitions orders_w_partition;
+
+
+Good to know things
+===========================================
+
+Enable no drop | disable no drop
+----------------------------------------
+
+alter table customers enable no_drop;
+
+alter table customers disable no_drop;
+
+
+Enable offline feature | disable offline feature
+-----------------------------------------------------
+
+alter trable order enable offline;
+
+alter trable order disable offline;
+
+
+Skipping headers when loading the data
+-------------------------------------------------------
+
+create table skip_test(
+name string,
+score int)
+row format delimited fields terminated by ','
+lines terminated by '\n'
+stored as textfile
+tblproperties("skip.header.line.count"="3");
+
+
+load data local inpath '/home/cloudera/Downloads/skip_dataset.csv' into table skip_test;
+
+
+Run HDFS commands from hive
+-------------------------------------------
+
+dfs /user/cloudera;
+
+Run linux commands from hive
+-----------------------------------------------
+
+!ls -ltr /home/cloudera/Desktop;
+
+Set hive dynamic variable
+-----------------------------------------------
+
+set hivevar:favourite_customer=1111; 
+
+select * from orders where customer_id=${favourite_customer};
+
+
+Printing headers along with data
+------------------------------------------------
+
+
+set hive.cli.print.header;
+
+select * from orders limit 5;
+
+
+Print headers along with data
+---------------------------------------------------
+
+set hive.cli.print.header=true;
+
+
+
+
+
