@@ -1,0 +1,259 @@
+use assig;
+
+hadoop credential create mysql.cloudera.password -provider jceks://hdfs/user/cloudera/mysql.password.jceks
+	
+hadoop fs -cat /user/cloudera/mysql.password.jceks
+
+hadoop fs -put Covid19_india.csv datasets
+hadoop fs -put StatewiseTestingDetails.csv datasets
+
+[cloudera@quickstart siva]$ hadoop fs -ls datasets
+Found 2 items
+-rw-r--r--   1 cloudera cloudera      85487 2021-07-11 06:27 datasets/Covid19_india.csv
+-rw-r--r--   1 cloudera cloudera      77259 2021-07-11 06:28 datasets/StatewiseTestingDetails.csv
+
+
+create table covid19_india(
+sno int NOT NULL,
+date nvarchar(50),
+state nvarchar(50),
+cured int,
+deaths int,
+confirmed int,
+PRIMARY KEY(sno)
+);
+
+
+create table covid19_india_staging as (select * from covid19_india);
+
+
+create table statewise_testing(
+seq int NOT NULL,
+date nvarchar(50),
+state nvarchar(50),
+totalsamples int,
+negative int,
+positive int,
+PRIMARY KEY(seq)
+);
+
+create table statewise_testing_staging as (select * from statewise_testing);
+
+
+[cloudera@quickstart Downloads]$ hadoop fs -ls practice
+
+
+
+sqoop export \
+-Dhadoop.security.credential.provider.path=jceks://hdfs/user/cloudera/mysql.password.jceks \
+--connect jdbc:mysql://localhost:3306/assig \
+--username root \
+--password-alias mysql.cloudera.password \
+--table covid19_india \
+--staging-table covid19_india_staging \
+--export-dir datasets/Covid19_india.csv \
+--fields-terminated-by ','
+
+
+sqoop export \
+-Dhadoop.security.credential.provider.path=jceks://hdfs/user/cloudera/mysql.password.jceks \
+--connect jdbc:mysql://localhost:3306/assig \
+--username root \
+--password-alias mysql.cloudera.password \
+--table statewise_testing \
+--staging-table statewise_testing_staging \
+--export-dir datasets/StatewiseTestingDetails.csv \
+--fields-terminated-by ','
+
+
+select * from covid19_india;
+select * from statewise_testing;
+
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
+
+------------- Sqoop job increamental import -------------
+
+sqoop job --delete job_covid19_india
+
+sqoop job \
+-Dhadoop.security.credential.provider.path=jceks://hdfs/user/cloudera/mysql.password.jceks \
+--create job_covid19_india \
+-- import \
+--connect jdbc:mysql://localhost:3306/assig \
+--username root \
+--password-alias mysql.cloudera.password \
+--table covid19_india \
+--warehouse-dir temp \
+--incremental append \
+--check-column sno \
+--last-value 0
+
+
+
+sqoop job --list
+
+-----
+sqoop job --delete job_statewise_testing
+
+sqoop job \
+-Dhadoop.security.credential.provider.path=jceks://hdfs/user/cloudera/mysql.password.jceks \
+--create job_statewise_testing \
+-- import \
+--connect jdbc:mysql://localhost:3306/assig \
+--username root \
+--password-alias mysql.cloudera.password \
+--table statewise_testing \
+--warehouse-dir temp \
+--incremental append \
+--check-column seq \
+--last-value 0
+
+
+
+sqoop job --list
+
+
+sqoop job --exec job_covid19_india
+
+sqoop job --exec job_statewise_testing
+
+[cloudera@quickstart siva]$ hadoop fs -ls temp
+Found 2 items
+drwxr-xr-x   - cloudera cloudera          0 2021-07-11 06:47 temp/covid19_india
+drwxr-xr-x   - cloudera cloudera          0 2021-07-11 06:50 temp/statewise_testing
+
+hadoop fs -ls temp/covid19_india
+hadoop fs -ls temp/statewise_testing
+
+
+
+
+
+-------------- External table --------------------------------------
+step 1: create external table 
+
+create external table covid19_table(
+sno int,
+date string,
+state string,
+cured int,
+deaths int,
+confirmed int
+)
+row format delimited
+fields terminated by ','
+stored as textfile
+location '/user/cloudera/temp/covid19_india/';
+
+
+
+
+create external table statewise_testing(
+seq int,
+date string,
+state string,
+totalsamples int,
+negative int,
+positive int
+)
+row format delimited
+fields terminated by ','
+stored as textfile
+location '/user/cloudera/temp/statewise_testing/';
+
+
+------------- Partitioning with Bucketing ------------------------
+
+
+SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+SET hive.enforce.bucketing=true;
+
+create external table covid19_p_table(
+sno int ,
+date date,
+cured int,
+deaths int,
+confirmed int
+)
+partitioned by (state string)
+clustered by (date) into 3 buckets
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+
+create external table statewise_p_testing(
+seq int,
+date string,
+totalsamples int,
+negative int,
+positive int
+)
+partitioned by (state string)
+clustered by (date) into 6 buckets
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+insert overwrite table covid19_p_table
+partition (state)
+select sno,from_unixtime(unix_timestamp(date,'dd/MM/yyyy'),'yyyy-MM-dd') date,cured,deaths,confirmed,state from covid19_table;
+
+
+
+insert overwrite table statewise_p_testing
+partition (state)
+select seq,from_unixtime(unix_timestamp(date,'dd/MM/yyyy'),'yyyy-MM-dd') date,totalsamples,negative,positive,state from statewise_testing;
+
+
+---------------------------------
+Mapside joins
+
+--Inner join
+
+Small table: statewise_p_testing
+Big table: covid19_p_table
+
+select * from statewise_p_testing s
+join covid19_p_table c on c.date = s.date and c.state = s.state
+where c.date = '2020-04-01';
+
+select * from statewise_p_testing s
+join covid19_p_table c on c.date = s.date and c.state = s.state
+where c.state = 'West Bengal';
+
+select * from statewise_p_testing s
+right join covid19_p_table c on c.date = s.date and c.state = s.state
+where c.state = 'West Bengal';
+
+-- (Left join & Full outer join) Won't work
+
+
+select * from statewise_p_testing s
+left join covid19_p_table c on c.date = s.date and c.state = s.state
+where c.state = 'West Bengal';
+
+select * from statewise_p_testing s
+full outer join covid19_p_table c on c.date = s.date and c.state = s.state
+where c.state = 'West Bengal';
+
+----------------------------------------
+
+State wise conformed cases
+
+
+select state,sum(confirmed) over(partition by state order by state) from covid19_p_table;
+
+select state,sum(confirmed) from covid19_p_table group by state;
+
+
+
+
+
+
+
+
+

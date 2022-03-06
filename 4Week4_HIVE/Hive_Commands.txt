@@ -1,0 +1,275 @@
+To see detailed information about table
+===========================================
+describe formatted customers;
+describe customers;
+
+
+WareHouse directory
+==========================================
+/user/hive/warehouse
+
+Create table and insert records
+===========================================
+create table customers(
+id bigint,
+name string,
+address string
+);
+
+(1111,"John","WA"),
+
+insert into customers values
+(2222,"Emily","WA"),
+(3333,"Rick","WA"),
+(4444,"Jane","CA"),
+(5555,"Amit","NJ"),
+(6666,"Nina","NY");
+
+Create table with "if not exist" statement
+============================================
+create table if not exists orders(
+id bigint,
+product_id string,
+customer_id bigint,
+quantity int,
+amount double
+);
+
+insert into orders values(
+111111,"phone",1111,3,1200
+);
+
+insert into orders values
+(111112,"camera",1111,1,5200),
+(111112,"broom",1111,1,10),
+(1111114,"broom",2222,2,20),
+(1111115,"t-shitrt",4444,2,66);
+
+
+Create "Managed table" 
+=============================================
+create table if not exists products_managed(
+id string,
+title string,
+cost float
+)
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+**Load data from local to hive table
+==================================================
+load data local inpath '/home/cloudera/Downloads/products.csv' 
+into table products_managed;
+
+create another table 
+==================================================
+create table if not exists products_managed1(
+id string,
+title string,
+cost float
+)
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+**Load data from HDFS to hive table 
+===================================================
+load data inpath '/data/products.csv' into table products_managed1;
+
+
+OverWrite a hive table 
+==========================================
+load data local inpath '/home/cloudera/Downloads/products.csv' 
+overwrite into table products_managed;
+
+
+**Load data from table to table
+==========================================
+insert into table products_managed2
+select * from products_managed;
+
+
+hdfs to hive -- move -- bz in general hadoop has 3 
+replicas already if incase copy then it will be 6 copies
+
+local to hive -- copy -- In local there is no replicas
+
+override -- replace the content
+
+
+Create External table** It will display NULL bz no delimited info
+==============================================
+create external table if not exists products(
+id string,
+title string,
+cost float
+)
+location '/data';
+
+
+create external table if not exists products(
+id string,
+title string,
+cost float
+)
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+
+Explode and lateral view
+============================================
+
+create table author_details(
+authorname string,
+booknames array<string>
+)
+row format delimited
+fields terminated by ','
+collection items terminated by ":";
+
+
+load data local inpath '/home/cloudera/Downloads/authors.csv' 
+into table author_details;
+
+
+select authorname,bname from author_details 
+lateral view explode(booknames) booktable as bname;
+
+
+
+Create a table with array data types
+====================================================
+create table mobilephones(
+id string,
+title string,
+cost float,
+colors array<string>,
+screen_size array<float>
+);
+
+Insert using select statement
+------------------------
+insert into table mobilephones
+select "redminote7","Redmi Note 7",300,array("white","silver","black"),
+array(float(4.5))
+union all
+select "motogplus","Moto G Plus",200,array("black","gold"),
+array(float(4.5),float(5.5));
+
+
+create table mobilephones_new(
+id string,
+title string,
+cost float,
+colors array<string>,
+screen_size array<float>
+)
+row format delimited
+fields terminated by ','
+collection items terminated by '#';
+
+load data
+---------------------------------------
+load data local inpath '/home/cloudera/Downloads/mobilephones.csv'
+into table mobilephones_new;
+
+
+
+Create table with MAP data types
+===========================================================
+create table mobilephones_map(
+id string,
+title string,
+cost float,
+colors array<string>,
+screen_size array<float>,
+features map<string,boolean>
+)
+row format delimited
+fields terminated by ','
+collection items terminated by '#'
+map keys terminated by ':';
+
+
+load data local inpath 'm '
+into table mobilephones_map;
+
+
+
+Create a table with struct datatype
+===========================================================
+drop table mobilephones;
+
+create table mobilephones(
+id string,
+title string,
+cost float,
+colors array<string>,
+screen_size array<float>,
+features map<string,boolean>,
+information struct<battery:string,camera:string>
+)
+row format delimited
+fields terminated by ','
+collection items terminated by '#'
+map keys terminated by ':';
+
+
+load data local inpath '/home/cloudera/Downloads/mobilephones.csv'
+into table mobilephones;
+
+
+
+
+UDF
+===============================================================
+
+package udf_example;
+import org.apache.hadoop.hive.ql.exec.UDF;
+public class extends UDF{
+public String evaluate(String input){
+if(input==null)
+{
+return null;
+}
+return (input.toUpperCase());
+}}
+
+
+
+use trendytech;
+create table if not exists sample_table(
+name string,
+count int
+) 
+row format delimited
+fields terminated by ','
+lines terminated by '\n'
+stored as textfile;
+
+
+lines terminated by '\n'  --------No need to use
+
+use trendytech;
+create table if not exists sample_table(
+name string,
+count int
+) 
+row format delimited
+fields terminated by ','
+stored as textfile;
+
+load data local inpath '/home/cloudera/Downloads/sample_data.txt'
+overwrite into table sample_table;
+
+
+Add Jar
+---------------------------
+ADD JAR /home/cloudera/Downloads/UDF_Example.jar;
+
+create temporary function udffun as
+'UDF_Example.ToUpperCaseFun';
+
+
