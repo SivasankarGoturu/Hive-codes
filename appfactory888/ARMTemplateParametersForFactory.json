@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "appfactory888"
+		},
+		"Adventureworkspace_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage_accountKey": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureDataLakeStorage2_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabase_connectionString": {
+			"value": ""
+		},
+		"AzureSynapseAnalytics_connectionString": {
+			"value": ""
+		},
+		"MyDatabase_connectionString": {
+			"value": ""
+		},
+		"VMFIleSystem_password": {
+			"value": ""
+		},
+		"VMFiles_password": {
+			"value": ""
+		},
+		"AzureDataLakeStorage_properties_typeProperties_url": {
+			"value": "https://datalake0007.dfs.core.windows.net/"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://datalake0007.dfs.core.windows.net/"
+		},
+		"AzureDataLakeStorage2_properties_typeProperties_url": {
+			"value": "https://datalake0007.dfs.core.windows.net/"
+		},
+		"VMFIleSystem_properties_typeProperties_host": {
+			"value": "D:\\nginx-1.22.1\\nginx-1.22.1\\logs"
+		},
+		"VMFIleSystem_properties_typeProperties_userId": {
+			"value": "siva"
+		},
+		"VMFiles_properties_typeProperties_host": {
+			"value": "D:\\nginx-1.22.1\\nginx-1.22.1\\logs"
+		},
+		"VMFiles_properties_typeProperties_userId": {
+			"value": "siva"
+		}
+	}
+}
