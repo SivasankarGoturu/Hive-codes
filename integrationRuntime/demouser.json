@@ -1,0 +1,6 @@
+{
+	"name": "demouser",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}

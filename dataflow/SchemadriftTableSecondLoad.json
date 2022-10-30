@@ -1,0 +1,60 @@
+{
+	"name": "SchemadriftTableSecondLoad",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "LogFileOneColumnMiss",
+						"type": "DatasetReference"
+					},
+					"name": "LogSource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "LogsTable",
+						"type": "DatasetReference"
+					},
+					"name": "logtable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AutoMapColumns"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> LogSource",
+				"LogSource derive(each(match(type=='string'), $$ = $$)) ~> AutoMapColumns",
+				"AutoMapColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          Id as integer,",
+				"          Correlationid as string,",
+				"          Operationname as string,",
+				"          Status as string,",
+				"          Eventcategory as string,",
+				"          Level as string,",
+				"          Time as string,",
+				"          Subscription as string,",
+				"          Eventinitiatedby as string,",
+				"          Resourcetype as string,",
+				"          Resourcegroup as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> logtable"
+			]
+		}
+	}
+}

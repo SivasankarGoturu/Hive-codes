@@ -1,0 +1,67 @@
+{
+	"name": "CustomersJsonArrayClean",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "CustomersJson",
+						"type": "DatasetReference"
+					},
+					"name": "CustomersJsonStream"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "CustomerFlatten",
+						"type": "DatasetReference"
+					},
+					"name": "OutputStram"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FlattenStream"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          customerid as integer,",
+				"          customername as string,",
+				"          registered as boolean,",
+				"          courses as string[]",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     documentForm: 'arrayOfDocuments') ~> CustomersJsonStream",
+				"CustomersJsonStream foldDown(unroll(courses, courses),",
+				"     mapColumn(",
+				"          customerid,",
+				"          customername,",
+				"          registered,",
+				"          courses",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> FlattenStream",
+				"FlattenStream sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['CustomersFlatten.csv'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          customerid,",
+				"          customername,",
+				"          registered,",
+				"          courses",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> OutputStram"
+			]
+		}
+	}
+}

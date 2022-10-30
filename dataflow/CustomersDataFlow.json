@@ -1,0 +1,87 @@
+{
+	"name": "CustomersDataFlow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Customers",
+						"type": "DatasetReference"
+					},
+					"name": "CustomersStream"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DimCustomers",
+						"type": "DatasetReference"
+					},
+					"name": "DimCustomer"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectColumns"
+				},
+				{
+					"name": "RemoveNULLs"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as integer,",
+				"          NameStyle as boolean,",
+				"          Title as string,",
+				"          FirstName as string,",
+				"          MiddleName as string,",
+				"          LastName as string,",
+				"          Suffix as string,",
+				"          CompanyName as string,",
+				"          SalesPerson as string,",
+				"          EmailAddress as string,",
+				"          Phone as string,",
+				"          PasswordHash as string,",
+				"          PasswordSalt as string,",
+				"          rowguid as string,",
+				"          ModifiedDate as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomersStream",
+				"CustomersStream select(mapColumn(",
+				"          CustomerID,",
+				"          FirstName,",
+				"          MiddleName",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectColumns",
+				"SelectColumns alterRow(deleteIf(isNull(MiddleName))) ~> RemoveNULLs",
+				"RemoveNULLs sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          cid as integer,",
+				"          fname as string,",
+				"          lname as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     staged: true,",
+				"     allowCopyCommand: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          cid = CustomerID,",
+				"          fname = FirstName,",
+				"          lname = MiddleName",
+				"     )) ~> DimCustomer"
+			]
+		}
+	}
+}

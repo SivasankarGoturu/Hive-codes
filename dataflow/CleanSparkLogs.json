@@ -1,0 +1,83 @@
+{
+	"name": "CleanSparkLogs",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SparkLogsTXT",
+						"type": "DatasetReference"
+					},
+					"name": "SparkLogsInput"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "SparkLogCleanedOutput",
+						"type": "DatasetReference"
+					},
+					"name": "SparkLogsOutput"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SelectColumns"
+				},
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          date as string,",
+				"          time as string,",
+				"          log_type as string,",
+				"          {_col3_} as string,",
+				"          {_col4_} as string,",
+				"          {_col5_} as string,",
+				"          {_col6_} as string,",
+				"          {_col7_} as string,",
+				"          {_col8_} as string,",
+				"          {_col9_} as string,",
+				"          {_col10_} as string,",
+				"          {_col11_} as string,",
+				"          {_col12_} as string,",
+				"          {_col13_} as string,",
+				"          {_col14_} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> SparkLogsInput",
+				"SparkLogsInput select(mapColumn(",
+				"          date,",
+				"          time,",
+				"          log_type,",
+				"          {_col4_},",
+				"          {_col5_},",
+				"          {_col6_},",
+				"          {_col7_},",
+				"          {_col8_},",
+				"          {_col9_},",
+				"          {_col10_},",
+				"          {_col11_},",
+				"          {_col12_},",
+				"          {_col13_},",
+				"          {_col14_}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectColumns",
+				"SelectColumns derive(time_at_log = toTimestamp(concat(date,' ', time), 'dd/MM/yyyy HH:mm:ss'),",
+				"          log_description = concat({_col4_}, ' ', {_col5_}, ' ', {_col6_}, ' ', {_col7_}, ' ', {_col8_}, ' ', {_col9_}, ' ', {_col10_}, ' ', {_col11_}, ' ', {_col12_}, ' ', {_col13_}, ' ', {_col14_})) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SparkLogsOutput"
+			]
+		}
+	}
+}

@@ -1,0 +1,173 @@
+{
+	"name": "ParquetToSynapse",
+	"properties": {
+		"activities": [
+			{
+				"name": "ParquetToSynapseTable",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.parquet",
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "SqlDWSink",
+						"allowCopyCommand": true
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "AzureDataLakeStorage",
+							"type": "LinkedServiceReference"
+						},
+						"path": "statedata"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "Id",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "Id",
+									"type": "Int32"
+								}
+							},
+							{
+								"source": {
+									"name": "Correlationid",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Correlationid",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Operationname",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Operationname",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Status",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Status",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Eventcategory",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Eventcategory",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Level",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Level",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Time",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "Time",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "Subscription",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Subscription",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Eventinitiatedby",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Eventinitiatedby",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Resourcetype",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Resourcetype",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "Resourcegroup",
+									"type": "String"
+								},
+								"sink": {
+									"name": "Resourcegroup",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "LogdataParquetFormat",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "AzureSynapseAnalyticsTable",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-08-24T06:24:49Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

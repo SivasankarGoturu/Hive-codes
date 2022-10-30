@@ -1,0 +1,46 @@
+{
+	"name": "SchemaDrift",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "LogFiles",
+						"type": "DatasetReference"
+					},
+					"name": "InputStram"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "JsonDrift",
+						"type": "DatasetReference"
+					},
+					"name": "JsonSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> InputStram",
+				"InputStram derive(each(match(type=='string'), $$ = $$)) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['LogsSchemaDrift.json'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> JsonSink"
+			]
+		}
+	}
+}

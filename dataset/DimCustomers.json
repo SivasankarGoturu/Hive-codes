@@ -1,0 +1,31 @@
+{
+	"name": "DimCustomers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSynapseAnalytics",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "cid",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fname",
+				"type": "varchar"
+			},
+			{
+				"name": "lname",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Dimcustomers"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
